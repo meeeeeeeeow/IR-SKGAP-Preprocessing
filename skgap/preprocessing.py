@@ -15,14 +15,26 @@
 import PyPDF2
 
 # read review paper and extract the text
+filename = 'paper'
+pdf = open(f'{filename}.pdf', 'rb')
+reader = PyPDF2.PdfFileReader(pdf, False)  # create a pdf reader object
 
-# (the import method should be changed to select a pdf file?)
-# (and the filename should be same to the title? -> so we can directly get the title)
+# extract pdf content
+# get title
+try:
+    title = reader.getOutlines()[0]['/Title']
+except:
+    title = reader.getDocumentInfo()['/Title']
 
-filename = 'Review of information extraction technologies and applications.pdf'
-pdf = open(filename, 'rb')
-pdfReader = PyPDF2.PdfFileReader(pdf)  # create a pdf reader object
-print(pdfReader.numPages)  # number of pages
-pageObj = pdfReader.getPage(0)  # create a page object
-print(pageObj.extractText())  # extract text
+# extract text
+num_pages = reader.numPages  # number of pages
+content = []  # store original content line by line
+for page in range(num_pages):
+    obj = reader.getPage(page)  # create a page object
+    line = obj.extractText().split('\n')  # extract text
+    content += line
 pdf.close()
+
+# preprocessing
+# split out each paragraph
+# ...
