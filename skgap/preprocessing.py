@@ -11,3 +11,13 @@
 # * The df of article
 # [General]
 # * The global Term frequence
+
+import PyPDF2
+
+filename = 'paper.pdf'
+pdf = open(filename, 'rb')
+pdfReader = PyPDF2.PdfFileReader(pdf)  # create a pdf reader object
+print(pdfReader.numPages)  # number of pages
+pageObj = pdfReader.getPage(0)  # create a page object
+print(pageObj.extractText())  # extract text
+pdf.close()
