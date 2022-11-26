@@ -14,7 +14,12 @@
 
 import PyPDF2
 
-filename = 'paper.pdf'
+# read review paper and extract the text
+
+# (the import method should be changed to select a pdf file?)
+# (and the filename should be same to the title? -> so we can directly get the title)
+
+filename = 'Review of information extraction technologies and applications.pdf'
 pdf = open(filename, 'rb')
 pdfReader = PyPDF2.PdfFileReader(pdf)  # create a pdf reader object
 print(pdfReader.numPages)  # number of pages
