@@ -41,17 +41,17 @@ for page in range(num_pages):
     for i, t in enumerate(text):
         # abstract
         if text[i:i+8].lower() == 'abstract' and is_first_abstract:  # get abstract
-            content_str = '\n' + t
+            content_str = t
             is_first_abstract = False
             
         # introduction
-        elif text[i:i+14].lower() == '1 introduction' and title_cnt == 0.0:  # type_1: 2.1
+        elif text[i:i+14].lower() == '1 introduction' and title_cnt == 0.0 and not is_first_abstract:  # type_1: 2.1
             content.append(content_str)
             content_str = t
             title_cnt = 1.0
             print(text[i:i+10])
             _type = 1
-        elif text[i:i+15].lower() == '1. introduction' and title_cnt == 0.0:  # type_2: 2.1.
+        elif text[i:i+15].lower() == '1. introduction' and title_cnt == 0.0 and not is_first_abstract:  # type_2: 2.1.
             content.append(content_str)
             content_str = t
             title_cnt = 1.0
@@ -77,14 +77,19 @@ for page in range(num_pages):
                     content_str = t
                     title_cnt = float(text[i])
                     print(text[i:i+10])
+                else:
+                    content_str += t
             except:
-                pass
+                content_str += t
+            
+        # reference
+        elif page > num_pages/2 and text[i:i+10].lower() == 'references':
+            content.append(content_str)
+            break
         else:
             content_str += t
-            
-    content.append(content_str)
 
-# print(len(content)) 錯的
+# 嘗試 pdf extractor github code
 
 # split out each paragraph
 paragraph = {}  # {title: content}
