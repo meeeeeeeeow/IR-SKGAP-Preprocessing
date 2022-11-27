@@ -15,19 +15,22 @@
 import PyPDF2
 
 # read review paper and extract the text
-filename = 'paper'
+filename = 'Review of information extraction technologies and applications'
 pdf = open(f'{filename}.pdf', 'rb')
 reader = PyPDF2.PdfFileReader(pdf, False)  # create a pdf reader object
 
 # extract pdf content
-# get paper title
+
+# # get paper title -> papers have different strustures, we can not extract the title in one way 
 # try:
 #     title = reader.getOutlines()[0]['/Title']
 # except:
 #     title = reader.getDocumentInfo()['/Title']
 
 # extract text
+title = filename
 num_pages = reader.numPages  # number of pages
+
 content_str = ""  # store the full text after adding '\n' for title detection
 content = []  # store original content paragraph by paragraph
 is_first_abstract = True
@@ -49,13 +52,11 @@ for page in range(num_pages):
             content.append(content_str)
             content_str = t
             title_cnt = 1.0
-            print(text[i:i+10])
             _type = 1
         elif text[i:i+15].lower() == '1. introduction' and title_cnt == 0.0 and not is_first_abstract:  # type_2: 2.1.
             content.append(content_str)
             content_str = t
             title_cnt = 1.0
-            print(text[i:i+10])
             _type = 2
             
         # other paragraph
@@ -68,7 +69,6 @@ for page in range(num_pages):
                     content.append(content_str)
                     content_str = t
                     title_cnt = float(text[i:i+3])
-                    print(text[i:i+10])
                 # title
                 elif int(t) - int(title_cnt) == 1 and text[i-2:i+1] != str(title_cnt) and not text[i-1].isalnum() and text[i-5:i-1].lower() != 'fig.' and text[i-6:i].lower() != 'table'  and\
                     ((_type == 1 and ((text[i+1] == ' ' and text[i+2].isupper()) or (text[i+1:i+3] == '  ' and text[i+3].isupper()))) or\
@@ -76,7 +76,6 @@ for page in range(num_pages):
                     content.append(content_str)
                     content_str = t
                     title_cnt = float(text[i])
-                    print(text[i:i+10])
                 else:
                     content_str += t
             except:
