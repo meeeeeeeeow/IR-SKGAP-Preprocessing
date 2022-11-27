@@ -38,12 +38,11 @@ title_cnt = 0.0
 
 for page in range(num_pages):
     obj = reader.getPage(page)  # create a page object
-    text = obj.extract_text()
-    
-    # extract field title (add a '\n' before the number)
+    text = obj.extract_text()  # get all text of the page
+
     for i, t in enumerate(text):
         # abstract
-        if text[i:i+8].lower() == 'abstract' and is_first_abstract:  # get abstract
+        if text[i:i+8].lower() == 'abstract' and is_first_abstract:
             content_str = t
             is_first_abstract = False
             
@@ -60,7 +59,7 @@ for page in range(num_pages):
             _type = 2
             
         # other paragraph
-        elif ord(t) >= 49 and ord(t) <= 57 and not is_first_abstract:  # number list
+        elif ord(t) >= 49 and ord(t) <= 57 and not is_first_abstract:
             try:
                 # subtitle
                 if text[i+1] == '.' and float(text[i:i+3]) > title_cnt and text[i-2:i+1] != str(title_cnt) and not text[i-1].isalnum() and text[i-5:i-1].lower() != 'fig.' and text[i-6:i].lower() != 'table' and\
@@ -92,7 +91,6 @@ for page in range(num_pages):
 
 # split out each paragraph
 paragraph = {}  # {title: content}
-title_cnt = 0
 
 
 
