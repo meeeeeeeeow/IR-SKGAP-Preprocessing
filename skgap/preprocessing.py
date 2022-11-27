@@ -131,6 +131,9 @@ def normalization(token_list, stopwords):
             w = normalize_process(t, stopwords)
             if w != None:
                 new_list.append(w)
+                
+    # 處理重複的字
+    # 直接一起做 dictionary
 
     return new_list
     
@@ -144,6 +147,12 @@ for sec in content:
     tokens = tokenization(sec)
     terms = normalization(tokens, stopwords)
     
+    # 要先做成 set 還是先每個段落都處理?
+    # 目前想的是
+        # 一list存原本所有字
+        # 一set存所有term(dictionary)
+        # 一??存所有df跟他出現在哪個文章(應該跟dict一起)
+    
 
 '''
 Note
@@ -151,5 +160,6 @@ Note
 2. 頁首或頁尾會印有出版書刊, 日期, doi 等，還沒刪掉
 3. 每篇 paper 格式都不同，PyPDF2 爬到的東西只有純文字，chapter number 都是用 naive 的 rule 去寫，無法 cover 到所有 paper
 4. 呈上，有 pretrained model (見上) 可用，但跑不起來 (連不到 server)
-5. 呈上上，title 亦然，每篇 paper 存 title 的方法都不一樣
+5. 呈上上，目前的規則是觀察 IR paper 都會有 title number，如果沒有就抓不到 -> 可能要直接爬網頁比較有機會
+6. 呈上上上，title 亦然，每篇 paper 存 title 的方法都不一樣
 '''
