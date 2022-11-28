@@ -38,9 +38,17 @@ content = []  # store original content paragraph by paragraph
 is_first_abstract = True
 title_cnt = 0.0
 
+def visitor_body(text, cm, tm, fontDict, fontSize):  # ignore header and footer
+    y = tm[5]
+    if y > 50 and y < 720:
+        parts.append(text)
+
 for page in range(num_pages):
     obj = reader.getPage(page)  # create a page object
-    text = obj.extract_text()  # get all text of the page
+    
+    parts = []  # store the processed text
+    obj.extract_text(visitor_text=visitor_body)  # get all text of the page
+    text = "".join(parts)
 
     for i, t in enumerate(text):
         # abstract
@@ -146,6 +154,7 @@ stopwords = ['me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'you
 for sec in content:
     tokens = tokenization(sec)
     terms = normalization(tokens, stopwords)
+    # print(terms)
     
     # 要先做成 set 還是先每個段落都處理?
     # 目前想的是
