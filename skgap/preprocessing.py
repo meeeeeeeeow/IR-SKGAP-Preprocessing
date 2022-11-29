@@ -130,7 +130,19 @@ if __name__ == '__main__':
     raise SystemExit
 '''
 
-
+class Term:
+    def __init__(self):
+        self.tf = 0  # term frequency
+        self.position = dict()  # {section idx: times}
+        
+    def add_tf(self):
+        self.tf += 1
+        
+    def add_pos(self, idx):
+        if idx not in self.position:
+            self.position[idx] = 0
+        self.position[idx] += 1
+        
 # basic preprocessing
 def tokenization(ori_text):
     new_text = ""
@@ -160,7 +172,7 @@ def normalize_process(word, stopwords):
     else:
         return None
     
-def normalization(token_list, stopwords):
+def normalization(idx, token_list, stopwords, dictionary):
     new_list = []
     
     for t in token_list:
@@ -171,8 +183,11 @@ def normalization(token_list, stopwords):
             if w != None:
                 new_list.append(w)
                 
-    # 處理重複的字
-    # 直接一起做 dictionary
+                # update dictionary
+                if t not in dictionary:
+                    dictionary[t] = Term()
+                dictionary[t].add_tf()
+                dictionary[t].add_pos(idx)
 
     return new_list
 
@@ -185,10 +200,17 @@ if __name__ == '__main__':
     title = filename
     num_pages = reader.numPages  # number of pages
     
+    stopwords = ['me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 
+                'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against',
+                'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most',
+                'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'don', 'should', 'now', 'also', 'as', 'e-mail', 'et', 'al']
+    
     content = []  # final text
     content_str = ""  # temp for text
     is_first_abstract = True
     title_cnt = 0
+    sections = {}  # {title: section content}
+    dictionary = {}  # {term: }
 
     # extract text and split out sections
     for page in range(num_pages):
@@ -245,22 +267,21 @@ if __name__ == '__main__':
 
     pdf.close() 
     
-stopwords = ['me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 
-            'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against',
-            'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most',
-            'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'don', 'should', 'now', 'also', 'as', 'e-mail', 'et', 'al']
-
-for sec in content:
-    tokens = tokenization(sec)
-    terms = normalization(tokens, stopwords)
-    # print(terms)
+    # preprocessing
+    for i, sec in enumerate(content):
+        # sep the parageaph
+        if i == 0:
+            sections['abstract'] = []
+        elif i == 1:
+            sections['introduction'] = []
+        else:
+            sections[sec.split('\n')[0]] = []
     
-    # 要先做成 set 還是先每個段落都處理?
-    # 目前想的是
-        # 一list存原本所有字
-        # 一set存所有term(dictionary)
-        # 一??存所有df跟他出現在哪個文章(應該跟dict一起)
-    
+        # normalization and create dictionary
+        tokens = tokenization(sec)
+        terms = normalization(i, tokens, stopwords, dictionary)
+        # print(sorted(dictionary.items(), key = lambda kv:(kv[1].tf, kv[0])))  # sort the dict by tf 
+        
 
 '''
 Note
@@ -270,4 +291,5 @@ Note
 4. 呈上，有 pretrained model (見上) 可用，但跑不起來 (連不到 server)
 5. 呈上上，目前的規則是觀察 IR paper 都會有 title number，如果沒有就抓不到 -> 可能要直接爬網頁比較有機會
 6. 呈上上上，title 亦然，每篇 paper 存 title 的方法都不一樣
+7. 沒有針對最後一小節標題和內文相連的狀況 e.g., summary
 '''
