@@ -24,7 +24,7 @@ def split_out_sec(num_pages, sections, sec):
         y = tm[5]
         all_parts.append([y, text])
 
-    num = 0  # store the section number
+    num = -1  # store the section number
     for page in range(num_pages):
         
         final_parts = []  # store the processed text
@@ -36,8 +36,8 @@ def split_out_sec(num_pages, sections, sec):
         
         for part in all_parts:
             if part[0] == 0.0:
-                if len(check_parts) > len(final_parts):
-                    final_parts = check_parts
+                if len(check_parts) > 5:
+                    final_parts += check_parts
                 check_parts = []
             else:
                 check_parts.append(part[1])
@@ -48,14 +48,16 @@ def split_out_sec(num_pages, sections, sec):
             if page > num_pages/2 and line[:10].lower() == "references":  # end (store ref using Google scholar, not file)
                 return sections
             elif line[:8].lower() == "abstract":
-                num = 1
+                num = 0
                 sec = "abstract"
                 sections[sec] = [line[len(sec):]]
-            elif num == 1 and ("1 introduction" in line.lower() or "1. introdiction" in line.lower()):
-                num = 2
+            elif num == 0 and ("1 introduction" in line.lower() or "1. introdiction" in line.lower()):
+                num = 1
                 sec = "introduction"
                 sections[sec] = [line[line.lower().find("introduction")+len(sec):]]
             elif re.match(r"[0-9][\.0-9]*\.?\ ", line):
+                # target = re.search(r".*[0-9][\.0-9]*\.?\ [A-Z]", line).group().split()[-2]
+                # print(target, line)
                 # idx_list = list(filter(None, line.split(' ')[0].split('.')))
                 # idx_list = idx_list + ['0'] * (2 - len(idx_list))
                 # idx = float(idx_list[0] + '.' + idx_list[1])
@@ -64,6 +66,7 @@ def split_out_sec(num_pages, sections, sec):
                 # else:
                 #     continue
                 
+                
                 if "summary" in line.lower():
                     idx = line.lower().find("summary")
                     sec = "summary"
@@ -71,7 +74,7 @@ def split_out_sec(num_pages, sections, sec):
                 else:
                     sec = line
                     sections[sec] = []
-            elif num != 0:
+            elif num != -1:
                 sections[sec].append(line)
 
 if __name__ == '__main__':
