@@ -31,9 +31,9 @@ def split_out_sec(num_pages, sections, sec):
         check_parts = []
         all_parts = []
 
+        # extract text without header and footer
         obj = reader.getPage(page)  # create a page object
-        obj.extract_text(visitor_text=visitor_body)  # get all text of the page
-        
+        obj.extract_text(visitor_text=visitor_body)  # get all text of the page  
         for part in all_parts:
             if part[0] == 0.0:
                 if len(check_parts) > 5:
@@ -41,9 +41,11 @@ def split_out_sec(num_pages, sections, sec):
                 check_parts = []
             else:
                 check_parts.append(part[1])
-        
         text = "".join(final_parts).split('\n')
         
+        # split out each section
+        last = ""  # last word of the previous sentence
+        cnt = 0  # record the number list
         for line in text:
             if page > num_pages/2 and line[:10].lower() == "references":  # end (store ref using Google scholar, not file)
                 return sections
@@ -55,17 +57,35 @@ def split_out_sec(num_pages, sections, sec):
                 num = 1
                 sec = "introduction"
                 sections[sec] = [line[line.lower().find("introduction")+len(sec):]]
-            elif re.match(r"[0-9][\.0-9]*\.?\ ", line):
-                # target = re.search(r".*[0-9][\.0-9]*\.?\ [A-Z]", line).group().split()[-2]
-                # print(target, line)
-                # idx_list = list(filter(None, line.split(' ')[0].split('.')))
-                # idx_list = idx_list + ['0'] * (2 - len(idx_list))
-                # idx = float(idx_list[0] + '.' + idx_list[1])
-                # if int(idx) - int(num) in [0, 1]:
-                #     num = idx
-                # else:
-                #     continue
+            elif num >= 1 and re.match(r"[0-9][\.0-9]*\.?\ [A-Z]", line):
                 
+                '''
+                目前會錯誤的情況:
+                1. number list 被考慮
+                2. 以範例 paper 而言，4.2 跟 4.2.2 不見了，因為他們跟前句黏在一起，而不是自成句首
+                '''
+                
+                # # extract the number (tar)
+                # target_obj = re.search(r".*[0-9][\.0-9]*\.?\ [A-Z]", line).group().split()
+                # try:
+                #     if target_obj[-3].lower() in ['fig.', 'figure', 'table']:  # number for fig and table
+                #         sections[sec].append(line)
+                # except:
+                #     pass
+                # tar = target_obj[-2]  # target number
+                # tar = re.sub('[^0-9^.]', '', tar)  # remove non-digit word
+                # if not tar[0].isdigit():  # check first element
+                #     tar = tar[1:]
+                
+                # # check if the number represent number list
+                # if last == ':':
+                #     cnt = 1
+                #     continue
+                # elif float(re.sub('[^0-9]', '', tar)) - cnt == 1:
+                #     cnt = float(re.sub('[^0-9]', '', tar))
+                #     continue
+                # else:
+                #     cnt = 0                
                 
                 if "summary" in line.lower():
                     idx = line.lower().find("summary")
@@ -76,6 +96,8 @@ def split_out_sec(num_pages, sections, sec):
                     sections[sec] = []
             elif num != -1:
                 sections[sec].append(line)
+                if line != '': last = line[-1]
+                else: last = ''
 
 if __name__ == '__main__':
     filename = 'Review of information extraction technologies and applications'
