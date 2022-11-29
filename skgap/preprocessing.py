@@ -134,6 +134,7 @@ class Term:
     def __init__(self):
         self.tf = 0  # term frequency
         self.position = dict()  # {section idx: times}
+        self.cite_pos = dict()  # {citation idx: times}
         
     def add_tf(self):
         self.tf += 1
@@ -143,7 +144,19 @@ class Term:
             self.position[idx] = 0
         self.position[idx] += 1
         
-# basic preprocessing
+    def add_cite_pos(self, idx):
+        if idx not in self.cite_pos:
+            self.cite_pos[idx] = 0
+        self.cite_pos[idx] += 1
+        
+class Citation:
+    def __init__(self, title, link):
+        self.title = title  # paper title
+        self.link = link  # link for searching on Google scholar
+        self.snippet = ""  # snippet -> for abstract mapping
+        self.cited_by = 0  # number of times this article has been cited
+        self.tokens = []  # all tokens in each article (may be duplicated)
+        
 def tokenization(ori_text):
     new_text = ""
     is_parentheses = False
@@ -210,7 +223,8 @@ if __name__ == '__main__':
     is_first_abstract = True
     title_cnt = 0
     sections = {}  # {title: section content}
-    dictionary = {}  # {term: }
+    dictionary = {}  # {term: Term obj}
+    citations = []  # [Citation obj]
 
     # extract text and split out sections
     for page in range(num_pages):
@@ -280,7 +294,11 @@ if __name__ == '__main__':
         # normalization and create dictionary
         tokens = tokenization(sec)
         terms = normalization(i, tokens, stopwords, dictionary)
-        # print(sorted(dictionary.items(), key = lambda kv:(kv[1].tf, kv[0])))  # sort the dict by tf 
+        
+
+    # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
+    
+    
         
 
 '''
