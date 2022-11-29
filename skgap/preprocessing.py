@@ -149,6 +149,12 @@ class Term:
             self.cite_pos[idx] = 0
         self.cite_pos[idx] += 1
         
+    def get_df(self):
+        if len(self.position) > 0:
+            return len(self.cite_pos) + 1
+        else:
+            return len(self.cite_pos)
+        
 class Citation:
     def __init__(self, title, link):
         self.title = title  # paper title
