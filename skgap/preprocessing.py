@@ -31,7 +31,7 @@ def split_out_sec(num_pages, sections, sec):
         check_parts = []
         all_parts = []
 
-        obj = reader.getPage(1)  # create a page object
+        obj = reader.getPage(page)  # create a page object
         obj.extract_text(visitor_text=visitor_body)  # get all text of the page
         
         for part in all_parts:
@@ -50,11 +50,11 @@ def split_out_sec(num_pages, sections, sec):
             elif line[:8].lower() == "abstract":
                 num = 1
                 sec = "abstract"
-                sections[sec] = [line[8:]]
-            # elif num == 1 and ("1 introduction" in line.lower() or "1. introdiction" in line.lower()):
-            #     num = 1
-            #     sec = "abstract"
-            #     sections[sec] = [line[8:]]
+                sections[sec] = [line[len(sec):]]
+            elif num == 1 and ("1 introduction" in line.lower() or "1. introdiction" in line.lower()):
+                num = 2
+                sec = "introduction"
+                sections[sec] = [line[line.lower().find("introduction")+len(sec):]]
             elif re.match(r"[0-9][\.0-9]*\.?\ ", line):
                 # idx_list = list(filter(None, line.split(' ')[0].split('.')))
                 # idx_list = idx_list + ['0'] * (2 - len(idx_list))
