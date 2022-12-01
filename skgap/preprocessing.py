@@ -17,6 +17,7 @@ import re
 import requests
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from serpapi import GoogleSearch
+from bs4 import BeautifulSoup
 
 
 '''
@@ -159,9 +160,9 @@ class Term:
             return len(self.cite_pos)
         
 class Citation:
-    def __init__(self, title, snippet, cited_num):
+    def __init__(self, title, link, cited_num):
         self.title = title  # paper title
-        self.snippet = snippet  # snippet -> for abstract mapping
+        self.link = link
         self.cited_by = cited_num  # number of times this article has been cited
         self.tokens = []  # all tokens in each article (may be duplicated)
         
@@ -213,9 +214,21 @@ def normalization(idx, token_list, stopwords, dictionary):
     return new_list
 
 def parse_abstract(cite):
+    link = cite.link
+    if link != "":  # there is a avaliable website
+        res = requests.get(link)
+        soup = BeautifulSoup(res.text, 'html.parser')  # get the content of web page
+        
+        for child in soup.descendants:
+            if child.text.lower() == 'abstract':  # abstract field
+                # 要退回到上一層，抓整個 div???
+                raise SystemExit
+        
+    return cite
+    
+    
     # bs4 比對大綱
     # normalization
-    return True
 
 def get_citataion(query, key, citations):
     # search review paper on Google scholar
@@ -253,13 +266,16 @@ def get_citataion(query, key, citations):
         
         for c in all_cite:
             title = c['title']
-            snippet = c['snippet']
+            try:
+                link = c['link']
+            except:  # no link
+                link = ""
             try:
                 cited_num = c['inline_links']['cited_by']['total']
             except:  # no citations
                 cited_num = 0
             
-            cite = Citation(title, snippet, cited_num)  # create a citation object
+            cite = Citation(title, link, cited_num)  # create a citation object
             citations.append(cite)
         
     return citations
@@ -360,10 +376,10 @@ if __name__ == '__main__':
     # # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
     
     
-    # search paper in Google scholar
-    citations = get_citataion(title, api_key, citations)
-    print(len(citations))
-    
+    # process for citations
+    citations = get_citataion(title, api_key, citations)  # search paper in Google scholar
+    for cite in citations:  # extract abstracts and get terms
+        cite = parse_abstract(cite)
     
         
 
