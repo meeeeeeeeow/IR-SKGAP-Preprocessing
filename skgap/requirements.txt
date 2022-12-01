@@ -3,3 +3,5 @@ nltk
 requests
 google-search-results
 beautifulsoup4
+selenium
+chromedriver-py

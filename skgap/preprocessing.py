@@ -15,9 +15,15 @@
 import PyPDF2
 import re
 import requests
+import time
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from serpapi import GoogleSearch
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from chromedriver_py import binary_path
+from selenium.webdriver.chrome.options import Options
 
 
 '''
@@ -215,20 +221,31 @@ def normalization(idx, token_list, stopwords, dictionary):
 
 def parse_abstract(cite):
     link = cite.link
-    if link != "":  # there is a avaliable website
-        res = requests.get(link)
-        soup = BeautifulSoup(res.text, 'html.parser')  # get the content of web page
+    print("===>", cite.title)
+    print("--->", link)
+    if link != "":  # if there is an avaliable website
+        service_object = Service(binary_path)
+        driver = webdriver.Chrome(service=service_object)  # consider of dynamic pages
+        driver.get(link)
+        time.sleep(3)
+
+        abstract = ""
+        try:
+            abstract = driver.find_element(By.XPATH, '//*[text()="Abstract"]/following-sibling::*[1]').text
+        except:
+            try:
+                abstract = driver.find_element(By.XPATH, '//*[text()="abstract"]/following-sibling::*[1]').text
+            except:
+                pass
         
-        for child in soup.descendants:
-            if child.text.lower() == 'abstract':  # abstract field
-                # 要退回到上一層，抓整個 div???
-                raise SystemExit
+        if abstract != "":
+            # parsing e.g., normalization
+            pass
+            
+        print(abstract)
+        driver.quit()
         
     return cite
-    
-    
-    # bs4 比對大綱
-    # normalization
 
 def get_citataion(query, key, citations):
     # search review paper on Google scholar
@@ -378,8 +395,11 @@ if __name__ == '__main__':
     
     # process for citations
     citations = get_citataion(title, api_key, citations)  # search paper in Google scholar
+    i = 1
     for cite in citations:  # extract abstracts and get terms
         cite = parse_abstract(cite)
+        i += 1
+        if i > 5: break
     
         
 
