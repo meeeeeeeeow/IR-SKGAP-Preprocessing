@@ -233,10 +233,15 @@ def parse_abstract(cite):
         try:
             abstract = driver.find_element(By.XPATH, '//*[text()="Abstract"]/following-sibling::*[1]').text
         except:
-            try:
-                abstract = driver.find_element(By.XPATH, '//*[text()="abstract"]/following-sibling::*[1]').text
-            except:
-                pass
+            pass
+        try:
+            abstract = driver.find_element(By.XPATH, '//*[text()="abstract"]/following-sibling::*[1]').text
+        except:
+            pass
+        try:
+            abstract = driver.find_element(By.XPATH, '//*[text()="ABSTRACT"]/following-sibling::*[1]').text
+        except:
+            pass
         
         if abstract != "":
             # parsing e.g., normalization
@@ -306,100 +311,104 @@ if __name__ == '__main__':
     title = filename
     num_pages = reader.numPages  # number of pages
     
-    api_key = '1f0dbcedc450cae96f25b4827e928b936bade3de2e148851ddac25366d461f8d'
+    api_key = '1f0dbcedc450cae96f25b4827e928b936bade3de2e148851ddac25366d461f8d'  # your own api key
     stopwords = ['me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 
                 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against',
                 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most',
                 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'don', 'should', 'now', 'also', 'as', 'e-mail', 'et', 'al']
     
-    # content = []  # final text
-    # content_str = ""  # temp for text
-    # is_first_abstract = True
-    # title_cnt = 0
-    # sections = {}  # {title: section content}
-    # dictionary = {}  # {term: Term obj}
+    content = []  # final text
+    content_str = ""  # temp for text
+    is_first_abstract = True
+    title_cnt = 0
+    sections = {}  # {title: section content}
+    dictionary = {}  # {term: Term obj}
     citations = []  # [Citation obj]
 
-    # # extract text and split out sections
-    # for page in range(num_pages):
-    #     obj = reader.getPage(page)
-    #     text = obj.extract_text()
+    # extract text and split out sections
+    for page in range(num_pages):
+        obj = reader.getPage(page)
+        text = obj.extract_text()
 
-    #     for i, t in enumerate(text):
-    #         # abstract
-    #         if text[i:i+8].lower() == 'abstract' and is_first_abstract:
-    #             content_str = t
-    #             is_first_abstract = False
+        for i, t in enumerate(text):
+            # abstract
+            if text[i:i+8].lower() == 'abstract' and is_first_abstract:
+                content_str = t
+                is_first_abstract = False
                 
-    #         # introduction
-    #         elif text[i:i+14].lower() == '1 introduction' and title_cnt == 0.0 and not is_first_abstract:  # type_1: 2.1
-    #             content.append(content_str)
-    #             content_str = t
-    #             title_cnt = 1.0
-    #             _type = 1
-    #         elif text[i:i+15].lower() == '1. introduction' and title_cnt == 0.0 and not is_first_abstract:  # type_2: 2.1.
-    #             content.append(content_str)
-    #             content_str = t
-    #             title_cnt = 1.0
-    #             _type = 2
+            # introduction
+            elif text[i:i+14].lower() == '1 introduction' and title_cnt == 0.0 and not is_first_abstract:  # type_1: 2.1
+                content.append(content_str)
+                content_str = t
+                title_cnt = 1.0
+                _type = 1
+            elif text[i:i+15].lower() == '1. introduction' and title_cnt == 0.0 and not is_first_abstract:  # type_2: 2.1.
+                content.append(content_str)
+                content_str = t
+                title_cnt = 1.0
+                _type = 2
                 
-    #         # other paragraph
-    #         elif ord(t) >= 49 and ord(t) <= 57 and not is_first_abstract:
-    #             try:
-    #                 # subtitle
-    #                 if text[i+1] == '.' and float(text[i:i+3]) > title_cnt and text[i-2:i+1] != str(title_cnt) and not text[i-1].isalnum() and text[i-5:i-1].lower() != 'fig.' and text[i-6:i].lower() != 'table' and\
-    #                     ((_type == 1 and ((text[i+3] == ' ' and text[i+4].isupper()) or (text[i+3:i+5] == '  ' and text[i+4].isupper()))) or\
-    #                         (_type == 2 and ((text[i+3:i+5] == '. ' and text[i+5].isupper()) or (text[i+3:i+6] == '.  ' and text[i+6].isupper())))):
-    #                     content.append(content_str)
-    #                     content_str = t
-    #                     title_cnt = float(text[i:i+3])
-    #                 # title
-    #                 elif int(t) - int(title_cnt) == 1 and text[i-2:i+1] != str(title_cnt) and not text[i-1].isalnum() and text[i-5:i-1].lower() != 'fig.' and text[i-6:i].lower() != 'table'  and\
-    #                     ((_type == 1 and ((text[i+1] == ' ' and text[i+2].isupper()) or (text[i+1:i+3] == '  ' and text[i+3].isupper()))) or\
-    #                         (_type == 2 and ((text[i+1:i+3] == '. ' and text[i+3].isupper()) or (text[i+1:i+4] == '.  ' and text[i+4].isupper())))):
-    #                     content.append(content_str)
-    #                     content_str = t
-    #                     title_cnt = float(text[i])
-    #                 else:
-    #                     content_str += t
-    #             except:
-    #                 content_str += t
+            # other paragraph
+            elif ord(t) >= 49 and ord(t) <= 57 and not is_first_abstract:
+                try:
+                    # subtitle
+                    if text[i+1] == '.' and float(text[i:i+3]) > title_cnt and text[i-2:i+1] != str(title_cnt) and not text[i-1].isalnum() and text[i-5:i-1].lower() != 'fig.' and text[i-6:i].lower() != 'table' and\
+                        ((_type == 1 and ((text[i+3] == ' ' and text[i+4].isupper()) or (text[i+3:i+5] == '  ' and text[i+4].isupper()))) or\
+                            (_type == 2 and ((text[i+3:i+5] == '. ' and text[i+5].isupper()) or (text[i+3:i+6] == '.  ' and text[i+6].isupper())))):
+                        content.append(content_str)
+                        content_str = t
+                        title_cnt = float(text[i:i+3])
+                    # title
+                    elif int(t) - int(title_cnt) == 1 and text[i-2:i+1] != str(title_cnt) and not text[i-1].isalnum() and text[i-5:i-1].lower() != 'fig.' and text[i-6:i].lower() != 'table'  and\
+                        ((_type == 1 and ((text[i+1] == ' ' and text[i+2].isupper()) or (text[i+1:i+3] == '  ' and text[i+3].isupper()))) or\
+                            (_type == 2 and ((text[i+1:i+3] == '. ' and text[i+3].isupper()) or (text[i+1:i+4] == '.  ' and text[i+4].isupper())))):
+                        content.append(content_str)
+                        content_str = t
+                        title_cnt = float(text[i])
+                    else:
+                        content_str += t
+                except:
+                    content_str += t
                 
-    #         # reference
-    #         elif page > num_pages/2 and text[i:i+10].lower() == 'references':
-    #             content.append(content_str)
-    #             break
-    #         else:
-    #             content_str += t
-    #     content_str += " "  # separate different pages
+            # reference
+            elif page > num_pages/2 and text[i:i+10].lower() == 'references':
+                content.append(content_str)
+                break
+            else:
+                content_str += t
+        content_str += " "  # separate different pages
 
-    # pdf.close() 
+    pdf.close() 
     
-    # # preprocessing
-    # for i, sec in enumerate(content):
-    #     # sep the parageaph
-    #     if i == 0:
-    #         sections['abstract'] = []
-    #     elif i == 1:
-    #         sections['introduction'] = []
-    #     else:
-    #         sections[sec.split('\n')[0]] = []
+    # preprocessing
+    for i, sec in enumerate(content):
+        # sep the parageaph
+        key = ""
+        if i == 0:
+            key = 'abstract'
+        elif i == 1:
+            key = 'introduction'
+        else:
+            key = "sec.split('\n')[0]"
     
-    #     # normalization and create dictionary
-    #     tokens = tokenization(sec)
-    #     terms = normalization(i, tokens, stopwords, dictionary)
-        
+        # normalization and create dictionary
+        tokens = tokenization(sec)
+        sections[key] = normalization(i, tokens, stopwords, dictionary)
+
+    # export dictionary as json file
+    
+
 
     # # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
     
     
-    # process for citations
-    citations = get_citataion(title, api_key, citations)  # search paper in Google scholar
-    i = 1
-    for cite in citations:  # extract abstracts and get terms
-        cite = parse_abstract(cite)
-        i += 1
-        if i > 5: break
+    # # process for citations
+    # citations = get_citataion(title, api_key, citations)  # search paper in Google scholar
+    # i = 1
+    # for cite in citations:  # extract abstracts and get terms
+    #     cite = parse_abstract(cite)
+    #     i += 1
+    #     if i > 5: break
     
         
 
