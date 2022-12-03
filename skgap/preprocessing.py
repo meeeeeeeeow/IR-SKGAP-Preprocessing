@@ -401,7 +401,7 @@ if __name__ == '__main__':
         elif i == 1:
             key = 'introduction'
         else:
-            key = "sec.split('\n')[0]"
+            key = sec.split('\n')[0]
     
         # normalization and create dictionary
         tokens = tokenization(sec)
