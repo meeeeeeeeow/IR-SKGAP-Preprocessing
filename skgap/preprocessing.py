@@ -16,6 +16,7 @@ import PyPDF2
 import re
 import requests
 import time
+import logging
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from serpapi import GoogleSearch
 from bs4 import BeautifulSoup
@@ -172,6 +173,9 @@ class Citation:
         self.cited_by = cited_num  # number of times this article has been cited
         self.tokens = []  # all tokens in each article (may be duplicated)
         
+    def set_tokens(self, tokens):
+        self.tokens = tokens
+        
 def tokenization(ori_text):
     new_text = ""
     is_parentheses = False
@@ -200,7 +204,7 @@ def normalize_process(word, stopwords):
     else:
         return None
     
-def normalization(idx, token_list, stopwords, dictionary):
+def normalization(idx, token_list, stopwords, dictionary, is_review):
     new_list = []
     
     for t in token_list:
@@ -215,14 +219,16 @@ def normalization(idx, token_list, stopwords, dictionary):
                 if t not in dictionary:
                     dictionary[t] = Term()
                 dictionary[t].add_tf()
-                dictionary[t].add_pos(idx)
+                
+                if is_review:
+                    dictionary[t].add_pos(idx)
+                else:
+                    dictionary[t].add_cite_pos(idx)
 
     return new_list
 
-def parse_abstract(cite):
+def parse_abstract(idx, cite, stopwords, dictionary):
     link = cite.link
-    print("===>", cite.title)
-    print("--->", link)
     if link != "":  # if there is an avaliable website
         service_object = Service(binary_path)
         driver = webdriver.Chrome(service=service_object)  # consider of dynamic pages
@@ -243,11 +249,10 @@ def parse_abstract(cite):
         except:
             pass
         
-        if abstract != "":
-            # parsing e.g., normalization
-            pass
-            
-        print(abstract)
+        if abstract != "":  # parsing e.g., tokenization, normalization, ...
+            tokens = tokenization(abstract)
+            cite.set_tokens(normalization(idx, tokens, stopwords, dictionary, False))
+
         driver.quit()
         
     return cite
@@ -308,9 +313,14 @@ if __name__ == '__main__':
     pdf = open(f'{filename}.pdf', 'rb')
     reader = PyPDF2.PdfFileReader(pdf, False)  # create a pdf reader object
     
+    logging.basicConfig(
+        level=logging.INFO,
+        format='[%(asctime)s %(levelname)-8s] %(message)s',
+        datefmt='%Y%m%d %H:%M:%S',
+	)
+    
     title = filename
     num_pages = reader.numPages  # number of pages
-    
     api_key = '1f0dbcedc450cae96f25b4827e928b936bade3de2e148851ddac25366d461f8d'  # your own api key
     stopwords = ['me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 
                 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against',
@@ -326,6 +336,7 @@ if __name__ == '__main__':
     citations = []  # [Citation obj]
 
     # extract text and split out sections
+    logging.info("Parsing PDF file ...")
     for page in range(num_pages):
         obj = reader.getPage(page)
         text = obj.extract_text()
@@ -381,6 +392,7 @@ if __name__ == '__main__':
     pdf.close() 
     
     # preprocessing
+    logging.info("Preprocessing and create dictionary ...")
     for i, sec in enumerate(content):
         # sep the parageaph
         key = ""
@@ -393,22 +405,20 @@ if __name__ == '__main__':
     
         # normalization and create dictionary
         tokens = tokenization(sec)
-        sections[key] = normalization(i, tokens, stopwords, dictionary)
-
-    # export dictionary as json file
-    
-
+        sections[key] = normalization(i, tokens, stopwords, dictionary, True)
 
     # # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
     
+    # process for citations
+    logging.info("Crawling citations ...")
+    citations = get_citataion(title, api_key, citations)  # search paper in Google scholar
     
-    # # process for citations
-    # citations = get_citataion(title, api_key, citations)  # search paper in Google scholar
-    # i = 1
-    # for cite in citations:  # extract abstracts and get terms
-    #     cite = parse_abstract(cite)
-    #     i += 1
-    #     if i > 5: break
+    logging.info("Parsing abstracts and update dictionary ...")
+    for i, cite in enumerate(citations):  # extract abstracts and get terms
+        cite = parse_abstract(i, cite, stopwords, dictionary)
+        break
+    logging.info("Finish preprocessing!")
+        
     
         
 
