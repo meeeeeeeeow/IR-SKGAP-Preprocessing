@@ -1,7 +1,7 @@
 # SKGAP
 Sturctural Knowledge Graph of Academic Papers
 
-# preprocessing
+## preprocessing
 ## Setting
 - use `pyhton` version 3.11.0
 - use `pip install -r requirements.txt` to install required packages
@@ -90,7 +90,7 @@ class Term:
             self.cite_pos[idx] = 0
         self.cite_pos[idx] += 1
         
-    def get_df(self):  # you can use term.get_dt to access the document frequency of the term
+    def get_df(self):  # you can use term.get_dt() to access the document frequency of the term
         if len(self.position) > 0:
             return len(self.cite_pos) + 1
         else:
