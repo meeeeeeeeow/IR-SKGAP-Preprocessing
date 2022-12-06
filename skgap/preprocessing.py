@@ -98,6 +98,12 @@ class Citation:
         self.tokens = tokens
         
 def tokenization(ori_text):
+    """Return a list of tokens for each section
+    
+    Args:
+        ori_text (string): original content of each section.
+    """
+    
     new_text = ""
     is_parentheses = False
     ori_text = ori_text.lower()  # lowercasting
@@ -115,6 +121,14 @@ def tokenization(ori_text):
     return list(filter(None, new_text.split(' ')))
     
 def normalize_process(word, stopwords):
+    """Return the term after stemming and lemmatization if the word is not a stopword
+       Return None if the word is a stopword
+       
+    Args:
+        word (string): a token.
+        stopwords (list): stopword list.
+    """
+    
     stemmer = PorterStemmer()
     lemmatizer = WordNetLemmatizer()
     
@@ -126,6 +140,16 @@ def normalize_process(word, stopwords):
         return None
     
 def normalization(idx, token_list, stopwords, dictionary, is_review):
+    """Return a list of terms for each section (preserve order and repeat words)
+    
+    Args:
+        idx (int): section index or citation index.
+        token_list (list): all tokens in each section or citation abstract.
+        stopwords (list): stopword list.
+        dictionary (dict): dictionary for terms.
+        is_review (bool): True: the token_list is from review paper; False: from citation abstract.
+    """
+    
     new_list = []
     
     for t in token_list:
@@ -149,6 +173,15 @@ def normalization(idx, token_list, stopwords, dictionary, is_review):
     return new_list
 
 def parse_abstract(idx, cite, stopwords, dictionary):
+    """Extract citation abstract from web page
+    
+    Args:
+        idx (int): citation index corresponding to the variable "citations".
+        cite (Citation object): a citation object.
+        stopwords (list): stopword list.
+        dictionary (dict): dictionary for terms.
+    """
+    
     link = cite.link
     if link != "":  # if there is an avaliable website
         service_object = Service(binary_path)
@@ -179,6 +212,14 @@ def parse_abstract(idx, cite, stopwords, dictionary):
     return cite
 
 def get_citataion(query, key, citations):
+    """Return all citations of the review paper
+    
+    Args:
+        query (string): title of review paper.
+        key (string): Google scholar API key.
+        citations (list): store all citations of the review paper.
+    """
+    
     # search review paper on Google scholar
     search_params = {
         "engine": "google_scholar",
