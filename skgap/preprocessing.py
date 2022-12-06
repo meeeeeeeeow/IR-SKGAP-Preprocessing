@@ -27,25 +27,43 @@ from chromedriver_py import binary_path
 from selenium.webdriver.chrome.options import Options
 
 class Term:
+    """Term information"""
+    
     def __init__(self):
         self.tf = 0  # term frequency
         self.position = dict()  # {section idx: times}
         self.cite_pos = dict()  # {citation idx: times}
         
     def add_tf(self):
+        """Add term frequency"""
+        
         self.tf += 1
         
     def add_pos(self, idx):
+        """Store which paragraph of the review paper the term appears in
+        
+        Args:
+            idx (int): The paragraph index corresponding to the variable "sections".
+        """
+        
         if idx not in self.position:
             self.position[idx] = 0
         self.position[idx] += 1
         
     def add_cite_pos(self, idx):
+        """Store which citation the term appears in
+        
+        Args:
+            idx (int): The citation index corresponding to the variable "citations".
+        """
+        
         if idx not in self.cite_pos:
             self.cite_pos[idx] = 0
         self.cite_pos[idx] += 1
         
     def get_df(self):
+        """Return the document frequency of the term"""
+        
         if len(self.position) > 0:
             return len(self.cite_pos) + 1
         else:
@@ -303,17 +321,3 @@ if __name__ == '__main__':
         cite = parse_abstract(i, cite, stopwords, dictionary)
         break
     logging.info("Finish preprocessing!")
-        
-    
-        
-
-'''
-Note
-1. 沒有考慮 dash
-2. 頁首或頁尾會印有出版書刊, 日期, doi 等，還沒刪掉
-3. 每篇 paper 格式都不同，PyPDF2 爬到的東西只有純文字，chapter number 都是用 naive 的 rule 去寫，無法 cover 到所有 paper
-4. 呈上，有 pretrained model (見上) 可用，但跑不起來 (連不到 server)
-5. 呈上上，目前的規則是觀察 IR paper 都會有 title number，如果沒有就抓不到 -> 可能要直接爬網頁比較有機會
-6. 呈上上上，title 亦然，每篇 paper 存 title 的方法都不一樣
-7. 沒有針對最後一小節標題和內文相連的狀況 e.g., summary
-'''
