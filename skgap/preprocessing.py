@@ -30,6 +30,8 @@ class Term:
     """Term information"""
     
     def __init__(self):
+        """Term model"""
+        
         self.tf = 0  # term frequency
         self.position = dict()  # {section idx: times}
         self.cite_pos = dict()  # {citation idx: times}
@@ -43,7 +45,7 @@ class Term:
         """Store which paragraph of the review paper the term appears in
         
         Args:
-            idx (int): The paragraph index corresponding to the variable "sections".
+            idx (int): paragraph index corresponding to the variable "sections".
         """
         
         if idx not in self.position:
@@ -54,7 +56,7 @@ class Term:
         """Store which citation the term appears in
         
         Args:
-            idx (int): The citation index corresponding to the variable "citations".
+            idx (int): citation index corresponding to the variable "citations".
         """
         
         if idx not in self.cite_pos:
@@ -70,13 +72,29 @@ class Term:
             return len(self.cite_pos)
         
 class Citation:
+    """Citation information"""
+    
     def __init__(self, title, link, cited_num):
+        """Citation model
+        
+        Args:
+            title (string): paper title of citation.
+            link (string): citation's web page.
+            cited_num (int): number of times this article has been cited.
+        """
+        
         self.title = title  # paper title
         self.link = link
         self.cited_by = cited_num  # number of times this article has been cited
         self.tokens = []  # all tokens in each article (may be duplicated)
         
     def set_tokens(self, tokens):
+        """Store the tokens extracted from each citation's abstract
+        
+        Args:
+            tokens (list): abstract tokens after tokenization and normalization.
+        """
+        
         self.tokens = tokens
         
 def tokenization(ori_text):
