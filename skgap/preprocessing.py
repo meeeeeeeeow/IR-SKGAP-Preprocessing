@@ -26,121 +26,6 @@ from selenium.webdriver.chrome.service import Service
 from chromedriver_py import binary_path
 from selenium.webdriver.chrome.options import Options
 
-
-'''
-# split out each section
-def split_out_sec(num_pages, sections, sec):
-    
-    # # ignore header and footer
-    # def visitor_body(text, cm, tm, fontDict, fontSize):
-    #     y = tm[5]
-    #     all_parts.append([y, text])
-    #     print(y, text)
-
-    num = -1  # store the section number
-    for page in range(num_pages):
-        
-        # final_parts = []  # store the processed text
-        # check_parts = []
-        # all_parts = []
-        
-        # # extract text without header and footer
-        # obj = reader.getPage(page)  # create a page object
-        # obj.extract_text(visitor_text=visitor_body)  # get all text of the page  
-        # for part in all_parts:
-        #     if part[0] == 0.0:
-        #         if len(check_parts) > 5:
-        #             final_parts += check_parts
-        #         check_parts = []
-        #     else:
-        #         check_parts.append(part[1])
-        # text = "".join(final_parts).split('\n')
-        
-        obj = reader.getPage(page)
-        text = obj.extract_text().split('\n')
-        
-        # split out each section
-        last = ""  # last word of the previous sentence
-        cnt = 0  # record the number list
-        for line in text:
-            if page > num_pages/2 and line[:10].lower() == "references":  # end (store ref using Google scholar, not file)
-                return sections
-            elif line[:8].lower() == "abstract":
-                num = 0
-                sec = "abstract"
-                sections[sec] = [line[len(sec):]]
-            elif num == 0 and ("1 introduction" in line.lower() or "1. introdiction" in line.lower()):
-                num = 1
-                sec = "introduction"
-                sections[sec] = [line[line.lower().find("introduction")+len(sec):]]
-            elif num >= 1 and re.match(r"[0-9][\.0-9]*\.?\ [A-Z]", line):
-                
-                
-                # 目前會錯誤的情況:
-                # 1. number list 被考慮
-                # 2. 以範例 paper 而言，4.2 跟 4.2.2 不見了，因為他們跟前句黏在一起，而不是自成句首
-                
-                
-                # # extract the number (tar)
-                # target_obj = re.search(r".*[0-9][\.0-9]*\.?\ [A-Z]", line).group().split()
-                # try:
-                #     if target_obj[-3].lower() in ['fig.', 'figure', 'table']:  # number for fig and table
-                #         sections[sec].append(line)
-                # except:
-                #     pass
-                # tar = target_obj[-2]  # target number
-                # tar = re.sub('[^0-9^.]', '', tar)  # remove non-digit word
-                # if not tar[0].isdigit():  # check first element
-                #     tar = tar[1:]
-                
-                # # check if the number represent number list
-                # if last == ':':
-                #     cnt = 1
-                #     continue
-                # elif float(re.sub('[^0-9]', '', tar)) - cnt == 1:
-                #     cnt = float(re.sub('[^0-9]', '', tar))
-                #     continue
-                # else:
-                #     cnt = 0                
-                
-                if "summary" in line.lower():
-                    idx = line.lower().find("summary")
-                    sec = "summary"
-                    sections[sec] = [line[idx+len(sec):]]
-                else:
-                    sec = line
-                    sections[sec] = []
-            elif num != -1:
-                sections[sec].append(line)
-                if line != '': last = line[-1]
-                else: last = ''
-
-if __name__ == '__main__':
-    # filename = 'Review of information extraction technologies and applications'
-    filename = 'test'
-    pdf = open(f'{filename}.pdf', 'rb')
-    reader = PyPDF2.PdfFileReader(pdf, False)  # create a pdf reader object
-
-    # extract pdf content
-    # title = reader.getOutlines()[0]['/Title']
-    # title = reader.getDocumentInfo()['/Title']
-    title = filename
-    num_pages = reader.numPages  # number of pages
-    
-    sections = {}  # store original content paragraph by paragraph
-    sec = "title"
-    sections[sec] = [title]
-    sections = split_out_sec(num_pages, sections, sec)            
-    
-    cnt = 0       
-    for k in sections.keys():
-        cnt += 1
-        print(k)
-    print(cnt)
-    
-    raise SystemExit
-'''
-
 class Term:
     def __init__(self):
         self.tf = 0  # term frequency
@@ -407,7 +292,7 @@ if __name__ == '__main__':
         tokens = tokenization(sec)
         sections[key] = normalization(i, tokens, stopwords, dictionary, True)
 
-    # # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
+    # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
     
     # process for citations
     logging.info("Crawling citations ...")
