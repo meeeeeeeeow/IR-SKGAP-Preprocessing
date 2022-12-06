@@ -188,22 +188,54 @@ def parse_abstract(idx, cite, stopwords, dictionary):
         driver = webdriver.Chrome(service=service_object)  # consider of dynamic pages
         driver.get(link)
         time.sleep(3)
-
-        abstract = ""
-        try:
-            abstract = driver.find_element(By.XPATH, '//*[text()="Abstract"]/following-sibling::*[1]').text
-        except:
-            pass
-        try:
-            abstract = driver.find_element(By.XPATH, '//*[text()="abstract"]/following-sibling::*[1]').text
-        except:
-            pass
-        try:
-            abstract = driver.find_element(By.XPATH, '//*[text()="ABSTRACT"]/following-sibling::*[1]').text
-        except:
-            pass
         
-        if abstract != "":  # parsing e.g., tokenization, normalization, ...
+        html_text=driver.page_source
+        soup = BeautifulSoup(html_text, 'html.parser')
+        abstract = ""
+        
+        # some typical journals
+        class_list = ['c-article-section__content',  # SpringerLink
+                      'abstractSection abstractInFull',  # ACM DIGITAL LIBRARY
+                      'article-content mt-lg mb-lg',  # IEEE COMPUTER SCIENCE DIGITAL LIBRARY
+                      'abstract-content',  # PLOS
+                      'article-abstract']  # JAIR
+        
+        try:  # SEMANTIC SCHOLAR
+            driver.find_element(By.XPATH, "//button[@data-selenium-selector='text-truncator-toggle']").click()
+            abstract = soup.find(attrs={'data-selenium-selector': 'text-truncator-text'}).text
+        except:
+            if soup.find(True, {'class': class_list}):
+                abstract = soup.find(True, {'class': class_list}).text
+            elif soup.find(itemprop='description'):  # ResearchGate
+                abstract = soup.find(itemprop='description').text
+            elif soup.find(class_='abstract mathjax'):  # arxiv
+                abstract = soup.find(class_='abstract mathjax').text[10:]
+            elif soup.select('.abstract.author'):  # ScienceDirect
+                abstract = soup.select('.abstract.author')[0].text[8:]
+            elif soup.find_all(class_='u-mb-1'):  # IEEE Xplore
+                abstract = soup.find_all(class_='u-mb-1')[1].text[10:]
+            elif soup.find(class_='item abstract'):  # AI MAGAZINE
+                abstract = soup.find(class_='item abstract').text[10:]
+            elif soup.select('.abstract'):  # JMLR
+                abstract = soup.select('.abstract')[0].text
+                
+        # if not the typical journal
+        if abstract == "":
+            try:
+                abstract = driver.find_element(By.XPATH, '//*[text()="Abstract"]/following-sibling::*[1]').text
+            except:
+                pass
+            try:
+                abstract = driver.find_element(By.XPATH, '//*[text()="abstract"]/following-sibling::*[1]').text
+            except:
+                pass
+            try:
+                abstract = driver.find_element(By.XPATH, '//*[text()="ABSTRACT"]/following-sibling::*[1]').text
+            except:
+                pass
+        
+        # parsing e.g., tokenization, normalization, ...
+        if abstract != "":
             tokens = tokenization(abstract)
             cite.set_tokens(normalization(idx, tokens, stopwords, dictionary, False))
 
@@ -378,5 +410,5 @@ if __name__ == '__main__':
     logging.info("Parsing abstracts and update dictionary ...")
     for i, cite in enumerate(citations):  # extract abstracts and get terms
         cite = parse_abstract(i, cite, stopwords, dictionary)
-        break
+        
     logging.info("Finish preprocessing!")
