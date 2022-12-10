@@ -69,12 +69,24 @@ class Term:
             return len(self.cite_pos)
         
     def get_section_tf(self, idx):
+        """Return the term frequency of ith section in review paper
+        
+        Args:
+            idx (int): section index corresponding to the variable "sections".
+        """
+        
         if idx in self.position:
             return self.position[idx]
         else:
             return 0
     
     def get_cite_tf(self, idx):
+        """Return the term frequency of ith citation
+        
+        Args:
+            idx (int): citation index corresponding to the variable "citations".
+        """
+        
         if idx in self.cite_pos:
             return self.cite_pos[idx]
         else:
