@@ -469,6 +469,7 @@ if __name__ == '__main__':
     dictionary = {}  # {term: Term obj}
     citations = []  # [Citation obj]
     references = {}  # {ref idx: Reference obj}
+    sec_ref = {}  # {section idx: [reference list]}
 
     # extract text and split out sections
     logging.info("Parsing PDF file ...")
@@ -545,6 +546,9 @@ if __name__ == '__main__':
                         references[idx] = ref
                     if sec not in references[idx].pos:
                         references[idx].add_sec(sec)  # add mentioned section index
+                        if sec not in sec_ref:
+                            sec_ref[sec] = []
+                        sec_ref[sec].append(idx)  # add mentioned ref index
             elif is_ref and t in '0123456789,;–- ':
                 temp += t
             elif t == '[':
@@ -562,7 +566,7 @@ if __name__ == '__main__':
                 content_str += t
         content_str += " "  # separate different pages
 
-    pdf.close() 
+    pdf.close()
     
     # parsing references
     all_ref = ref_str[10:].split('\n')
