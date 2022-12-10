@@ -13,18 +13,14 @@
 # * The global Term frequence
 
 import PyPDF2
-import re
-import requests
 import time
 import logging
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from serpapi import GoogleSearch
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from chromedriver_py import binary_path
-from selenium.webdriver.chrome.options import Options
 
 class Term:
     """Term information"""
