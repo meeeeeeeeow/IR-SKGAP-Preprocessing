@@ -22,6 +22,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from chromedriver_py import binary_path
+from bs4 import BeautifulSoup
 
 class Term:
     """Term information"""
