@@ -195,7 +195,6 @@ class Reference:
         """
         
         self.tokens = tokens
-        return 0
         
 def tokenization(ori_text):
     """Return a list of tokens for each section
