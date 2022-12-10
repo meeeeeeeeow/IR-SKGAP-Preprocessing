@@ -148,6 +148,12 @@ class Reference:
     """Reference information"""
     
     def __init__(self, index):
+        """Reference model
+        
+        Args:
+            index (int): reference index corresponding to the number in the paper.
+        """
+        
         self.idx = index  # reference index
         self.origin = ""  # original content in review paper's reference part
         self.title = ""
