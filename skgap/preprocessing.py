@@ -34,6 +34,7 @@ class Term:
         self.tf = 0  # term frequency
         self.position = dict()  # {section idx: times}
         self.cite_pos = dict()  # {citation idx: times}
+        self.ref_pos = dict()  # {reference idx: times}
         
     def add_tf(self):
         """Add term frequency"""
@@ -61,6 +62,11 @@ class Term:
         if idx not in self.cite_pos:
             self.cite_pos[idx] = 0
         self.cite_pos[idx] += 1
+        
+    def add_ref_pos(self, idx):        
+        if idx not in self.ref_pos:
+            self.ref_pos[idx] = 0
+        self.ref_pos[idx] += 1
         
     def get_df(self):
         """Return the document frequency of the term"""
@@ -93,6 +99,9 @@ class Term:
             return self.cite_pos[idx]
         else:
             return 0
+        
+    def get_ref_tf(self, idx):  #############################
+        return 0
         
 class Citation:
     """Citation information"""
@@ -144,7 +153,7 @@ class Reference:
         self.cited_by = num
         
     def set_tokens(self, tokens): 
-        # self.tokens = tokens
+        self.tokens = tokens
         return 0
         
 def tokenization(ori_text):
@@ -189,7 +198,7 @@ def normalize_process(word, stopwords):
     else:
         return None
     
-def normalization(idx, token_list, stopwords, dictionary, is_review):
+def normalization(idx, token_list, stopwords, dictionary, obj_type):
     """Return a list of terms for each section (preserve order and repeat words)
     
     Args:
@@ -215,14 +224,16 @@ def normalization(idx, token_list, stopwords, dictionary, is_review):
                     dictionary[t] = Term()
                 dictionary[t].add_tf()
                 
-                if is_review:
+                if obj_type == 0:
                     dictionary[t].add_pos(idx)
-                else:
+                elif obj_type == 1:
                     dictionary[t].add_cite_pos(idx)
+                elif obj_type == 2:
+                    dictionary[t].add_ref_pos(idx)
 
     return new_list
 
-def parse_abstract(idx, cite, stopwords, dictionary):
+def parse_abstract(idx, cite, stopwords, dictionary, obj_type):
     """Extract citation abstract from web page
     
     Args:
@@ -287,7 +298,7 @@ def parse_abstract(idx, cite, stopwords, dictionary):
         # parsing e.g., tokenization, normalization, ...
         if abstract != "":
             tokens = tokenization(abstract)
-            cite.set_tokens(normalization(idx, tokens, stopwords, dictionary, False))
+            cite.set_tokens(normalization(idx, tokens, stopwords, dictionary, obj_type))
 
         driver.quit()
         
@@ -351,7 +362,7 @@ def get_citataion(query, key, citations):
         
     return citations
 
-def get_reference(query, key, ref):
+def parse_reference(query, key, ref, stopwords, dictionary):
     # search paper on Google scholar
     search_params = {
         "engine": "google_scholar",
@@ -369,7 +380,7 @@ def get_reference(query, key, ref):
     except:  # no search result
         return ref
     else:
-        # 處理 abstract
+        ref = parse_abstract(ref.idx, ref, stopwords, dictionary, 2)
         return ref
 
 # stopwords list
@@ -534,15 +545,15 @@ if __name__ == '__main__':
     
         # normalization and create dictionary
         tokens = tokenization(sec)
-        sections[key] = normalization(i, tokens, stopwords, dictionary, True)
+        sections[key] = normalization(i, tokens, stopwords, dictionary, 0)
 
     # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
     
     # process for references
     logging.info("Searching references and parsing abstracts ...")
     for idx, ref in references.items():
-        ref = get_reference(ref.origin, api_key, ref)
-        print(idx, ref.title, ref.link, ref.cited_by)
+        ref = parse_reference(ref.origin, api_key, ref, stopwords, dictionary)
+        if idx > 3: break
     
     raise SystemExit
     
@@ -552,6 +563,6 @@ if __name__ == '__main__':
     
     logging.info("Parsing abstracts and update dictionary ...")
     for i, cite in enumerate(citations):  # extract abstracts and get terms
-        cite = parse_abstract(i, cite, stopwords, dictionary)
+        cite = parse_abstract(i, cite, stopwords, dictionary, 1)
 
     logging.info("Finish preprocessing!")
