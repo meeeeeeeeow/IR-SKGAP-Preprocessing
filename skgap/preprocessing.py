@@ -401,5 +401,5 @@ if __name__ == '__main__':
     logging.info("Parsing abstracts and update dictionary ...")
     for i, cite in enumerate(citations):  # extract abstracts and get terms
         cite = parse_abstract(i, cite, stopwords, dictionary)
-        break
+
     logging.info("Finish preprocessing!")
