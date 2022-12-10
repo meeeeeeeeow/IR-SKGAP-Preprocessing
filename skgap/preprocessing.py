@@ -63,7 +63,13 @@ class Term:
             self.cite_pos[idx] = 0
         self.cite_pos[idx] += 1
         
-    def add_ref_pos(self, idx):        
+    def add_ref_pos(self, idx):  
+        """Store which reference the term appears in
+        
+        Args:
+            idx (int): reference index corresponding to the variable "references.key()".
+        """
+              
         if idx not in self.ref_pos:
             self.ref_pos[idx] = 0
         self.ref_pos[idx] += 1
@@ -100,8 +106,17 @@ class Term:
         else:
             return 0
         
-    def get_ref_tf(self, idx):  #############################
-        return 0
+    def get_ref_tf(self, idx):
+        """Return the term frequency of ith reference
+        
+        Args:
+            idx (int): reference "key".
+        """
+        
+        if idx in self.ref_pos:
+            return self.ref_pos[idx]
+        else:
+            return 0
         
 class Citation:
     """Citation information"""
@@ -142,17 +157,43 @@ class Reference:
         self.pos = []  # which section does this artical be mentioned
         
     def add_sec(self, idx):
+        """Store which section does the reference be mentioned
+        
+        Args:
+            idx (int): section index.
+        """
+        
         self.pos.append(idx)
     
     def set_content(self, text):
+        """Store the original content of reference format in the review paper
+        
+        Args:
+            text (string): the original content of the reference.
+        """
+        
         self.origin = text
         
     def set_info(self, title, link, num):
+        """Store the basic information of referenced paper
+        
+        Args:
+            title (string): paper title.
+            link (link): link to paper's web page.
+            num (int): how many times does the paper be cited.
+        """
+        
         self.title = title
         self.link = link
         self.cited_by = num
         
-    def set_tokens(self, tokens): 
+    def set_tokens(self, tokens):
+        """Store the tokens extracted from each reference's abstract
+        
+        Args:
+            tokens (list): abstract tokens after tokenization and normalization.
+        """
+        
         self.tokens = tokens
         return 0
         
@@ -206,7 +247,7 @@ def normalization(idx, token_list, stopwords, dictionary, obj_type):
         token_list (list): all tokens in each section or citation abstract.
         stopwords (list): stopword list.
         dictionary (dict): dictionary for terms.
-        is_review (bool): True: the token_list is from review paper; False: from citation abstract.
+        obj_type (int): 0: review paper; 1: citations; 2: references.
     """
     
     new_list = []
@@ -224,11 +265,11 @@ def normalization(idx, token_list, stopwords, dictionary, obj_type):
                     dictionary[t] = Term()
                 dictionary[t].add_tf()
                 
-                if obj_type == 0:
+                if obj_type == 0:  # for review paper
                     dictionary[t].add_pos(idx)
-                elif obj_type == 1:
+                elif obj_type == 1:  # for citations
                     dictionary[t].add_cite_pos(idx)
-                elif obj_type == 2:
+                elif obj_type == 2:  # for references
                     dictionary[t].add_ref_pos(idx)
 
     return new_list
@@ -238,9 +279,10 @@ def parse_abstract(idx, cite, stopwords, dictionary, obj_type):
     
     Args:
         idx (int): citation index corresponding to the variable "citations".
-        cite (Citation object): a citation object.
+        cite (Citation object or Reference object): a citation object or reference object.
         stopwords (list): stopword list.
         dictionary (dict): dictionary for terms.
+        obj_type (int): 0: review paper; 1: citations; 2: references.
     """
     
     link = cite.link
@@ -363,6 +405,16 @@ def get_citataion(query, key, citations):
     return citations
 
 def parse_reference(query, key, ref, stopwords, dictionary):
+    """Return reference object after extracting basic information and parsing abstract
+    
+    Args:
+        query (string): original content of the reference in the review paper.
+        key (string): Google scholar API key.
+        ref (Reference object): reference object.
+        stopwords (list): stopword list.
+        dictionary (dict): dictionary for terms.
+    """
+     
     # search paper on Google scholar
     search_params = {
         "engine": "google_scholar",
@@ -553,9 +605,6 @@ if __name__ == '__main__':
     logging.info("Searching references and parsing abstracts ...")
     for idx, ref in references.items():
         ref = parse_reference(ref.origin, api_key, ref, stopwords, dictionary)
-        if idx > 3: break
-    
-    raise SystemExit
     
     # process for citations
     logging.info("Crawling citations ...")
