@@ -138,6 +138,11 @@ class Reference:
     def set_content(self, text):
         self.origin = text
         
+    def set_info(self, title, link, num):
+        self.title = title
+        self.link = link
+        self.cited_by = num
+        
     def set_tokens(self, tokens): 
         # self.tokens = tokens
         return 0
@@ -346,6 +351,27 @@ def get_citataion(query, key, citations):
         
     return citations
 
+def get_reference(query, key, ref):
+    # search paper on Google scholar
+    search_params = {
+        "engine": "google_scholar",
+        "q": query,
+        "api_key": key
+    }  
+    search = GoogleSearch(search_params)
+    res = search.get_dict()['organic_results'][0]
+    
+    try:
+        title = res['title']
+        link = res['link']
+        cited_num = res['inline_links']['cited_by']['total']
+        ref.set_info(title, link, cited_num)
+    except:  # no search result
+        return ref
+    else:
+        # 處理 abstract
+        return ref
+
 # stopwords list
 stopwords = ['me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 
                 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against',
@@ -493,12 +519,6 @@ if __name__ == '__main__':
             else:
                 temp += ref
     references[ref_cnt].set_content(temp)  # the last one
-    
-    for k, v in references.items():
-        print('---')
-        print(k, v.origin)
-        
-    raise SystemExit
         
     # preprocessing
     logging.info("Preprocessing and create dictionary ...")
@@ -517,6 +537,14 @@ if __name__ == '__main__':
         sections[key] = normalization(i, tokens, stopwords, dictionary, True)
 
     # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
+    
+    # process for references
+    logging.info("Searching references and parsing abstracts ...")
+    for idx, ref in references.items():
+        ref = get_reference(ref.origin, api_key, ref)
+        print(idx, ref.title, ref.link, ref.cited_by)
+    
+    raise SystemExit
     
     # process for citations
     logging.info("Crawling citations ...")
