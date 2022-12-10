@@ -15,6 +15,7 @@
 import PyPDF2
 import time
 import logging
+import re
 
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from serpapi import GoogleSearch
@@ -118,6 +119,25 @@ class Citation:
         """
         
         self.tokens = tokens
+        
+class Reference:
+    """Reference information"""
+    
+    def __init__(self, index):
+        self.idx = index  # reference index
+        self.title = ""
+        self.origin = ""  # original content in review paper's reference part
+        self.link = ""
+        self.cited_by = 0  # number of times this article has been cited
+        self.tokens = []  # all tokens in each article (may be duplicated)
+        self.pos = []  # which section does this artical be mentioned
+        
+    def add_sec(self, idx):
+        self.pos.append(idx)
+        
+    def set_tokens(self, tokens): 
+        # self.tokens = tokens
+        return 0
         
 def tokenization(ori_text):
     """Return a list of tokens for each section
@@ -348,17 +368,19 @@ if __name__ == '__main__':
     content = []  # final text
     content_str = ""  # temp for text
     is_first_abstract = True
+    is_ref = False
     title_cnt = 0
     sections = {}  # {title: section content}
     dictionary = {}  # {term: Term obj}
     citations = []  # [Citation obj]
+    references = {}  # {ref idx: Reference obj}
 
     # extract text and split out sections
     logging.info("Parsing PDF file ...")
     for page in range(num_pages):
         obj = reader.getPage(page)
         text = obj.extract_text()
-
+        
         for i, t in enumerate(text):
             # abstract
             if text[i:i+8].lower() == 'abstract' and is_first_abstract:
@@ -398,6 +420,34 @@ if __name__ == '__main__':
                         content_str += t
                 except:
                     content_str += t
+                    
+            # check reference
+            if t == ']':
+                is_ref = False
+                temp = re.split(r'[,\s]', temp)
+                temp = list(filter(None, temp))
+                new_temp = []
+                for ele in temp:  # handle consecutive numbers
+                    if '–' in ele or '-' in ele:
+                        ele = re.split(r'[–-]', ele)
+                        new_ele = range(int(ele[0]), int(ele[1])+1, 1)
+                        new_temp += new_ele
+                    else:
+                        new_temp += [int(ele)]
+                
+                # create Regerence object
+                for idx in new_temp:
+                    sec = len(content) - 1  # paragraph index
+                    if idx not in references:
+                        ref = Reference(idx)
+                        references[idx] = ref
+                    if sec not in references[idx].pos:
+                        references[idx].add_sec(sec)  # add mentioned section index
+            elif is_ref and t in '0123456789,–- ':
+                temp += t
+            elif t == '[':
+                temp = ""
+                is_ref = True
                 
             # reference
             elif page > num_pages/2 and text[i:i+10].lower() == 'references':
@@ -424,6 +474,11 @@ if __name__ == '__main__':
         # normalization and create dictionary
         tokens = tokenization(sec)
         sections[key] = normalization(i, tokens, stopwords, dictionary, True)
+        
+    for k, v in references.items():
+        print(k, v.idx, v.pos)
+
+    raise SystemExit
 
     # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
     
