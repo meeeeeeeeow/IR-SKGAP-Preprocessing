@@ -125,8 +125,8 @@ class Reference:
     
     def __init__(self, index):
         self.idx = index  # reference index
-        self.title = ""
         self.origin = ""  # original content in review paper's reference part
+        self.title = ""
         self.link = ""
         self.cited_by = 0  # number of times this article has been cited
         self.tokens = []  # all tokens in each article (may be duplicated)
@@ -134,6 +134,9 @@ class Reference:
         
     def add_sec(self, idx):
         self.pos.append(idx)
+    
+    def set_content(self, text):
+        self.origin = text
         
     def set_tokens(self, tokens): 
         # self.tokens = tokens
@@ -369,6 +372,9 @@ if __name__ == '__main__':
     content_str = ""  # temp for text
     is_first_abstract = True
     is_ref = False
+    is_ref_part = False
+    ref_str = ""  # temp for references
+    ref_cnt = 0
     title_cnt = 0
     sections = {}  # {title: section content}
     dictionary = {}  # {term: Term obj}
@@ -382,6 +388,13 @@ if __name__ == '__main__':
         text = obj.extract_text()
         
         for i, t in enumerate(text):
+            # references
+            if is_ref_part:
+                start = re.search(r'[0-9]+\.\s?|[0-9]+\s?|[[0-9]+]\s?', text.split('\n')[0]).start()
+                ref_str += text[start:]
+                ref_str += '\n'
+                break
+                   
             # abstract
             if text[i:i+8].lower() == 'abstract' and is_first_abstract:
                 content_str = t
@@ -424,7 +437,7 @@ if __name__ == '__main__':
             # check reference
             if t == ']':
                 is_ref = False
-                temp = re.split(r'[,\s]', temp)
+                temp = re.split(r'[,;\s]', temp)
                 temp = list(filter(None, temp))
                 new_temp = []
                 for ele in temp:  # handle consecutive numbers
@@ -443,15 +456,18 @@ if __name__ == '__main__':
                         references[idx] = ref
                     if sec not in references[idx].pos:
                         references[idx].add_sec(sec)  # add mentioned section index
-            elif is_ref and t in '0123456789,–- ':
+            elif is_ref and t in '0123456789,;–- ':
                 temp += t
             elif t == '[':
                 temp = ""
                 is_ref = True
                 
-            # reference
-            elif page > num_pages/2 and text[i:i+10].lower() == 'references':
+            # end of content
+            elif page > num_pages/2 and text[i:i+10].lower() == 'references' and t.isupper():
                 content.append(content_str)
+                ref_str += text[i:]
+                ref_str += '\n'
+                is_ref_part = True
                 break
             else:
                 content_str += t
@@ -459,6 +475,31 @@ if __name__ == '__main__':
 
     pdf.close() 
     
+    # parsing references
+    all_ref = ref_str[10:].split('\n')
+    temp = ""
+    for ref in all_ref:
+        try:
+            start = re.search(r'[0-9]+\.\s?|[0-9]+\s?|[[0-9]+]\s?', ref).group(0)
+        except:
+            temp += ref
+        else:
+            num = int("".join(filter(str.isdigit, start)))
+            if num == ref_cnt + 1:
+                if ref_cnt > 0:
+                    references[num-1].set_content(temp)  # previous referenct content
+                ref_cnt += 1
+                temp = ref[len(start):]
+            else:
+                temp += ref
+    references[ref_cnt].set_content(temp)  # the last one
+    
+    for k, v in references.items():
+        print('---')
+        print(k, v.origin)
+        
+    raise SystemExit
+        
     # preprocessing
     logging.info("Preprocessing and create dictionary ...")
     for i, sec in enumerate(content):
@@ -474,11 +515,6 @@ if __name__ == '__main__':
         # normalization and create dictionary
         tokens = tokenization(sec)
         sections[key] = normalization(i, tokens, stopwords, dictionary, True)
-        
-    for k, v in references.items():
-        print(k, v.idx, v.pos)
-
-    raise SystemExit
 
     # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
     
