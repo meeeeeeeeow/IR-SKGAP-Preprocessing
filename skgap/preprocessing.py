@@ -68,6 +68,18 @@ class Term:
         else:
             return len(self.cite_pos)
         
+    def get_section_tf(self, idx):
+        if idx in self.position:
+            return self.position[idx]
+        else:
+            return 0
+    
+    def get_cite_tf(self, idx):
+        if idx in self.cite_pos:
+            return self.cite_pos[idx]
+        else:
+            return 0
+        
 class Citation:
     """Citation information"""
     
