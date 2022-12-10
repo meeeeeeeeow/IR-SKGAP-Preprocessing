@@ -31,15 +31,15 @@ class Term:
     def __init__(self):
         """Term model"""
         
-        self.tf = 0  # term frequency
+        self.times = 0  # number of occurrence
         self.position = dict()  # {section idx: times}
         self.cite_pos = dict()  # {citation idx: times}
         self.ref_pos = dict()  # {reference idx: times}
         
-    def add_tf(self):
+    def add_times(self):
         """Add term frequency"""
         
-        self.tf += 1
+        self.times += 1
         
     def add_pos(self, idx):
         """Store which paragraph of the review paper the term appears in
@@ -82,8 +82,8 @@ class Term:
         else:
             return len(self.cite_pos)
         
-    def get_section_tf(self, idx):
-        """Return the term frequency of ith section in review paper
+    def get_section_times(self, idx):
+        """Return the number of occurrences of ith section in review paper
         
         Args:
             idx (int): section index corresponding to the variable "sections".
@@ -94,8 +94,8 @@ class Term:
         else:
             return 0
     
-    def get_cite_tf(self, idx):
-        """Return the term frequency of ith citation
+    def get_cite_times(self, idx):
+        """Return the number of occurrences of ith citation
         
         Args:
             idx (int): citation index corresponding to the variable "citations".
@@ -106,8 +106,8 @@ class Term:
         else:
             return 0
         
-    def get_ref_tf(self, idx):
-        """Return the term frequency of ith reference
+    def get_ref_times(self, idx):
+        """Return the number of occurrences of ith reference
         
         Args:
             idx (int): reference "key".
@@ -268,7 +268,7 @@ def normalization(idx, token_list, stopwords, dictionary, obj_type):
                 # update dictionary
                 if t not in dictionary:
                     dictionary[t] = Term()
-                dictionary[t].add_tf()
+                dictionary[t].add_times()
                 
                 if obj_type == 0:  # for review paper
                     dictionary[t].add_pos(idx)
@@ -608,7 +608,7 @@ if __name__ == '__main__':
         tokens = tokenization(sec)
         sections[key] = normalization(i, tokens, stopwords, dictionary, 0)
 
-    # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].tf, reverse=True))  # sort by tf
+    # dictionary = dict(sorted(dictionary.items(), key=lambda item: item[1].times, reverse=True))  # sort by times
     
     # process for references
     logging.info("Searching references and parsing abstracts ...")
