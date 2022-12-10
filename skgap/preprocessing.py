@@ -13,18 +13,15 @@
 # * The global Term frequence
 
 import PyPDF2
-import re
-import requests
 import time
 import logging
+
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from serpapi import GoogleSearch
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from chromedriver_py import binary_path
-from selenium.webdriver.chrome.options import Options
 
 class Term:
     """Term information"""
@@ -70,6 +67,30 @@ class Term:
             return len(self.cite_pos) + 1
         else:
             return len(self.cite_pos)
+        
+    def get_section_tf(self, idx):
+        """Return the term frequency of ith section in review paper
+        
+        Args:
+            idx (int): section index corresponding to the variable "sections".
+        """
+        
+        if idx in self.position:
+            return self.position[idx]
+        else:
+            return 0
+    
+    def get_cite_tf(self, idx):
+        """Return the term frequency of ith citation
+        
+        Args:
+            idx (int): citation index corresponding to the variable "citations".
+        """
+        
+        if idx in self.cite_pos:
+            return self.cite_pos[idx]
+        else:
+            return 0
         
 class Citation:
     """Citation information"""
@@ -301,6 +322,12 @@ def get_citataion(query, key, citations):
         
     return citations
 
+# stopwords list
+stopwords = ['me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 
+                'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against',
+                'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most',
+                'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'don', 'should', 'now', 'also', 'as', 'e-mail', 'et', 'al']
+
 if __name__ == '__main__':
     filename = 'Review of information extraction technologies and applications'
     # filename = 'test'
@@ -316,10 +343,6 @@ if __name__ == '__main__':
     title = filename
     num_pages = reader.numPages  # number of pages
     api_key = '1f0dbcedc450cae96f25b4827e928b936bade3de2e148851ddac25366d461f8d'  # your own api key
-    stopwords = ['me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 
-                'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against',
-                'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most',
-                'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'don', 'should', 'now', 'also', 'as', 'e-mail', 'et', 'al']
     
     content = []  # final text
     content_str = ""  # temp for text
@@ -410,5 +433,5 @@ if __name__ == '__main__':
     logging.info("Parsing abstracts and update dictionary ...")
     for i, cite in enumerate(citations):  # extract abstracts and get terms
         cite = parse_abstract(i, cite, stopwords, dictionary)
-        
+
     logging.info("Finish preprocessing!")
