@@ -8,11 +8,10 @@
 # Cat2     ["titleA","titleB","title1"]
 # Cat3     ["title@","titleD","titleE"]
 
-from collections import Counter
-import numpy as np
-from numpy.linalg import norm
 import math
-import operator
+import numpy as np
+from collections import Counter
+from numpy.linalg import norm
 
 
 def CalculateTF(CAs):
@@ -21,23 +20,23 @@ def CalculateTF(CAs):
     Args:
         CAs (dictionary): Input variable. Use title names as keys and a list of terms of the abstracts as values.
         TF (dictionary): Output variable.
-        Dict (list): Output variable. It contains all terms in all abstracts 
+        dictionary (list): Output variable. It contains all terms in all abstracts 
     """
     TF = {}
-    Dict = []  # 建 dictionary from all terms of the abstracts
+    dictionary = []  # Build dictionary from all terms of the abstracts
     for title in CAs:
-        Dict = Dict + CAs[title]
+        dictionary = dictionary + CAs[title]
 
     for title in CAs:
         single = CAs[title]
         temp = Counter(single)
-        for word in Dict:
+        for word in set(dictionary):
             TF[(word, title)] = temp[word]
 
-    return TF, Dict
+    return TF, dictionary
 
 
-def CalculateIDF(CAs, Dict):
+def CalculateIDF(CAs, dictionary):
     """ Return the iverse document frequency (IDF)
 
     Args:
@@ -45,12 +44,12 @@ def CalculateIDF(CAs, Dict):
         IDF (dictionary): Output variable.
     """
     DF = {}
-    DF = DF.fromkeys(Dict)
+    DF = DF.fromkeys(dictionary)
     for i in DF:
         DF[i] = 0
 
     for title in CAs:
-        for word in Dict:
+        for word in dictionary:
             if word in CAs[title]:
                 DF[word] += 1
 
@@ -69,11 +68,11 @@ def CalTF_IDF(CAs):
 
     Args:
         CAs (dictionary): Input variable. Use title names as keys and a list of terms of the abstracts as values.
-        TF-IDF (dictionary): Output variable.
+        TF_IDF (dictionary): Output variable.
         Dict (list): Output variable. It contains all terms in all abstracts 
     """
-    TF, Dict = CalculateTF(CAs)
-    idf = CalculateIDF(CAs, Dict)
+    TF, dictionary = CalculateTF(CAs)
+    idf = CalculateIDF(CAs, dictionary)
 
     TF_IDF = {}
     TF_IDF = TF_IDF.fromkeys(list(TF.keys()))
@@ -83,10 +82,10 @@ def CalTF_IDF(CAs):
     for (word, title) in TF:
         TF_IDF[(word, title)] = (TF[(word, title)] + 0.000001) * idf[word]
 
-    return TF_IDF, Dict
+    return TF_IDF, dictionary
 
 
-def Similarity(TF_IDF, title1, title2, Dict):  # ConsineSimilarity
+def Similarity(TF_IDF, title1, title2, dictionary):  # ConsineSimilarity
     """ Return consine similarity of two documents
 
     Args:
@@ -98,7 +97,7 @@ def Similarity(TF_IDF, title1, title2, Dict):  # ConsineSimilarity
     """
     doc_x = []
     doc_y = []
-    for word in Dict:
+    for word in dictionary:
         doc_x.append(TF_IDF[(word, title1)])
         doc_y.append(TF_IDF[(word, title2)])
 
@@ -132,21 +131,21 @@ def Clustering(CAs):
         CAs (dictionary): Input variable. Use title names as keys and a list of terms of the abstracts as values.
         A (list): Output variable. It contains a list of merges
     """
-    TF_IDF, Dict = CalTF_IDF(CAs)
+    TF_IDF, dictionary = CalTF_IDF(CAs)
     N = len(CAs)  # The number of abstracts
     C = {}  # The matrix containing the similarity between clusters i and j
     I = {}  # Indicate which clusters are still available to be merged
     for title1 in CAs:
         for title2 in CAs:
-            C[title1, title2] = Similarity(TF_IDF, title1, title2, Dict)
+            C[title1, title2] = Similarity(TF_IDF, title1, title2, dictionary)
             I[title1] = 1
 
     A = []  # A list of merges
     for k in range(1, N):
+        # Get the pair of clusters with maximum similarity
         maximum_key = ChooseMax(C, I)
         cluster1 = maximum_key[0]
         cluster2 = maximum_key[1]
-        # Get the pair of clusters with maximum similarity
         A.append(maximum_key)
 
         for cluster in I:  # Update other clusters with the new cluster which combine two clusters by using the complete-link
@@ -155,5 +154,4 @@ def Clustering(CAs):
             C[cluster, cluster1] = min(
                 C[cluster1, cluster2], C[cluster, cluster1])
         I[cluster2] = 0
-
     return A
