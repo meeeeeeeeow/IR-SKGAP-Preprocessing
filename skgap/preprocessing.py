@@ -31,7 +31,7 @@ class Term:
     def __init__(self):
         """Term model"""
         
-        self.times = 0  # number of occurrence
+        self.times = 0  # number of occurrences
         self.position = dict()  # {section idx: times}
         self.cite_pos = dict()  # {citation idx: times}
         self.ref_pos = dict()  # {reference idx: times}
@@ -215,7 +215,8 @@ def tokenization(ori_text):
     
     for i, t in enumerate(ori_text):
         if is_parentheses:
-            is_parentheses = False
+            if t == ')':
+                is_parentheses = False
         elif t == '(':  # skip the words in the ()
             is_parentheses = True
         elif not t.isalpha():  # remove numbers and marks (didn't consider dash)
