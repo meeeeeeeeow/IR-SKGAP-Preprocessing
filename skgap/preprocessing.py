@@ -25,12 +25,14 @@ from selenium.webdriver.chrome.service import Service
 from chromedriver_py import binary_path
 from bs4 import BeautifulSoup
 
+
 class Term:
     """Term information"""
     
     def __init__(self):
         """Term model"""
         
+
         self.times = 0  # number of occurrences
         self.position = dict()  # {section idx: times}
         self.cite_pos = dict()  # {citation idx: times}
@@ -82,8 +84,10 @@ class Term:
         else:
             return len(self.cite_pos)
         
+
     def get_section_times(self, idx):
         """Return the number of occurrences of ith section in review paper
+
         
         Args:
             idx (int): section index corresponding to the variable "sections".
@@ -202,6 +206,7 @@ class Reference:
         
         self.tokens = tokens
         
+
 def tokenization(ori_text):
     """Return a list of tokens for each section
     
@@ -245,6 +250,7 @@ def normalize_process(word, stopwords):
     else:
         return None
     
+
 def normalization(idx, token_list, stopwords, dictionary, obj_type):
     """Return a list of terms for each section (preserve order and repeat words)
     
@@ -297,7 +303,7 @@ def parse_abstract(idx, cite, stopwords, dictionary, obj_type):
         driver = webdriver.Chrome(service=service_object)  # consider of dynamic pages
         driver.get(link)
         time.sleep(3)
-        
+
         html_text=driver.page_source
         soup = BeautifulSoup(html_text, 'html.parser')
         abstract = ""
@@ -441,6 +447,7 @@ def parse_reference(query, key, ref, stopwords, dictionary):
         ref = parse_abstract(ref.idx, ref, stopwords, dictionary, 2)
         return ref
 
+
 # stopwords list
 stopwords = ['me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 
                 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against',
@@ -482,7 +489,7 @@ if __name__ == '__main__':
     for page in range(num_pages):
         obj = reader.getPage(page)
         text = obj.extract_text()
-        
+
         for i, t in enumerate(text):
             # references
             if is_ref_part:
@@ -592,7 +599,6 @@ if __name__ == '__main__':
             else:
                 temp += ref
     references[ref_cnt].set_content(temp)  # the last one
-        
     # preprocessing
     logging.info("Preprocessing and create dictionary ...")
     for i, sec in enumerate(content):
