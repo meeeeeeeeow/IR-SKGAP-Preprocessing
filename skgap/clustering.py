@@ -69,7 +69,7 @@ def CalTF_IDF(CAs):
     Args:
         CAs (dictionary): Input variable. Use title names as keys and a list of terms of the abstracts as values.
         TF_IDF (dictionary): Output variable.
-        Dict (list): Output variable. It contains all terms in all abstracts 
+        dictionary (list): Output variable. It contains all terms in all abstracts. 
     """
     TF, dictionary = CalculateTF(CAs)
     idf = CalculateIDF(CAs, dictionary)
@@ -129,7 +129,8 @@ def Clustering(CAs):
         Use Hierachical Agglomerative Clustering (HAC) to implement clustering
     Args:
         CAs (dictionary): Input variable. Use title names as keys and a list of terms of the abstracts as values.
-        A (list): Output variable. It contains a list of merges
+        All_cluster (dictionary): Output variable. It contains a list of merges
+        dictionary (list): Output variable. It contains all terms in all abstracts.
     """
     TF_IDF, dictionary = CalTF_IDF(CAs)
     N = len(CAs)  # The number of abstracts
@@ -140,6 +141,12 @@ def Clustering(CAs):
             C[title1, title2] = Similarity(TF_IDF, title1, title2, dictionary)
             I[title1] = 1
 
+    level = [i for i in range(0, N)]
+    All_cluster = {new_list: []
+                   for new_list in level}  # record each level of clusters
+    for key in CAs.keys():
+        All_cluster[0].append([key])  # The level 0 contains all documents.
+
     A = []  # A list of merges
     for k in range(1, N):
         # Get the pair of clusters with maximum similarity
@@ -148,10 +155,82 @@ def Clustering(CAs):
         cluster2 = maximum_key[1]
         A.append(maximum_key)
 
+        # Each new stage of clustering first copy from the last stage of clustering
+        All_cluster[k] = All_cluster[k-1].copy()
+        for i in range(len(All_cluster[k-1])):
+            # Find the first document of each cluster i which equals the cluster 1
+            if cluster1 == All_cluster[k-1][i][0]:
+                real_cluster1_index = i
+            # Find the document in each cluster i which equals cluster 2
+            for title in All_cluster[k-1][i]:
+                if cluster2 == title:
+                    real_cluster2_index = i
+                    break
+
+        # Add the cluster 1 and cluster 2 into one cluster in stage k
+        All_cluster[k].append(
+            All_cluster[k-1][real_cluster1_index]+All_cluster[k-1][real_cluster2_index])
+        # Remove the cluster 1 which was clustered in stage k
+        All_cluster[k].remove(All_cluster[k-1][real_cluster1_index])
+        # Remove the cluster 2 which was clustered in stage k
+        All_cluster[k].remove(All_cluster[k-1][real_cluster2_index])
+
         for cluster in I:  # Update other clusters with the new cluster which combine two clusters by using the complete-link
             C[cluster1, cluster] = min(
                 C[cluster1, cluster2], C[cluster, cluster1])
             C[cluster, cluster1] = min(
                 C[cluster1, cluster2], C[cluster, cluster1])
         I[cluster2] = 0
-    return A
+    # Return All_cluster so that we can use it to do labeling
+    return All_cluster, dictionary
+
+
+def Cal_Frequent_Predictive_Word(CAs, clusters, dictionary):
+    """ Return labelings of each cluster
+    Use "Frequent and Predictive Words Method" (https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=9cf5a7c658926f8c7898cae1bd4687f67a040617)
+        This method lables clusters by choosing the largest score of the product of local frequency and predictiveness.
+        The product of local frequency and predictiveness = score(word|class) * score(word|class)/score(word)
+        Local frequency is score(word|class): frequency of the word in a given cluster
+        Predictiveness is score(word|class)/score(word). 
+        score(word): the word's frequency in a more general category or in the whole collection.
+
+    Args:
+    CAs (list): Input variable. It contains different levels of the merges
+    clusters (int): Input variable. One cluster includes numbers of abstracts.
+    dictionary (list): Input variables. It contains all terms in all abstracts.
+    frequency_word (list): Output variables. It contains the top three words selected from "Frequent and Predictive Words Method". 
+    """
+    cluster_dictionary = []  # To obtain the all tokens from all abstracts in the cluster
+    for title in clusters:
+        cluster_dictionary = cluster_dictionary + CAs[title]
+
+    score_word = Counter(dictionary)
+    score_word_class = {}  # To gain the number of the word appears in the cluster
+    score = {}
+    for word in set(cluster_dictionary):
+        score_word_class[word] = Counter(cluster_dictionary)[word]
+        score[word] = score_word_class[word] * score_word[word]
+
+    frequency_word = []  # To get the top three words as labeling category
+    for (word, frequency) in Counter(score).most_common(3):
+        frequency_word.append(word)
+
+    return frequency_word
+
+
+def Labeling(CAs, K):
+    """ Return labelings of each cluster
+
+     Args:
+        All_cluster (list): Input variable. It contains different levels of the merges
+        K (int): Input variable. Determine how many numbers of clusters
+        Label (dictionary): Output variables.
+    """
+    All_cluster, dictionary = Clustering(CAs)
+
+    category = {}
+    # len(CAs)-(K) means that the order of the clustering
+    for clusters in All_cluster[len(CAs)-(K)]:
+        category[tuple(clusters)] = Cal_Frequent_Predictive_Word(
+            CAs, clusters, dictionary)
+    print(category)

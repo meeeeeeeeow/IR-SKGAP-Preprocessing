@@ -1,6 +1,6 @@
 from main import foo
 import unittest
-from clustering import Clustering
+from clustering import Clustering, Labeling
 from nltk.stem import PorterStemmer
 
 
@@ -63,8 +63,9 @@ class BasicTest(unittest.TestCase):
 
             return single
 
-        CAs = {'title1': Preprocessing('4.txt'), 'title2': Preprocessing(
-            '5.txt'), 'title3': Preprocessing('6.txt')}
-
-        print(Clustering(CAs))
+        CAs = {}
+        for i in range(1, 11):
+            CAs['title%s' % i] = Preprocessing('%s.txt' % i)
+        K = 3  # The number of clustering
+        print(Labeling(CAs, K))
         assert True
